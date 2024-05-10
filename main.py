@@ -69,6 +69,23 @@ class Player(pygame.sprite.Sprite):
         if self.rect.right > screen.get_width():
             self.rect.right = screen.get_width()
 
+# Player 2 class
+class Player2(pygame.sprite.Sprite):
+    def __init__(self, image, position):
+        super().__init__()
+        self.image = image
+        self.rect = self.image.get_rect(center=position)
+        self.speed = player_speed
+
+    def move(self, direction):
+        # Update the x-coordinate
+        self.rect.x += direction * self.speed
+        # Ensure the player doesn't go out of the screen boundaries
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > screen.get_width():
+            self.rect.right = screen.get_width()
+
 # Projectile class
 class Projectile(pygame.sprite.Sprite):
     def __init__(self, image, position):
@@ -116,8 +133,12 @@ enemies_group = pygame.sprite.Group()
 projectiles = pygame.sprite.Group()
 
 # Add player and enemies to sprite groups
-player_sprite = Player(player_image, [640, 650])
+player_sprite = Player(player_image, [300, 650])
 all_sprites.add(player_sprite)
+
+# Add player 2 to sprite groups
+player2_sprite = Player2(player_image, [900, 650])
+all_sprites.add(player2_sprite)
 
 enemies = [Enemy(enemy_image, pos) for pos in [[100, 50], [200, 50], [300, 50], [400, 50], [500, 50], [600, 50], [700, 50], [800, 50], [900, 50], [1000, 50], [1100, 50], [1200, 50], [1300, 50], [1400, 50], [1500, 50], [1600, 50], [1700, 50], [1800, 50]]]
 for enemy in enemies:
@@ -144,19 +165,27 @@ def game_loop():
     while game_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_running = False
+                game_running = False  # Set game_running to False to exit the loop
             elif event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     shoot_projectile(player_sprite)
+                elif event.key == pygame.K_w:  # Player 2 up
+                    shoot_projectile(player2_sprite)
 
-        # Handle key inputs
+        # Handle key inputs for player 1
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player_sprite.move(-1)
         if keys[pygame.K_RIGHT]:
             player_sprite.move(1)
+
+        # Handle key inputs for player 2
+        if keys[pygame.K_a]:  # Player 2 left
+            player2_sprite.move(-1)
+        if keys[pygame.K_d]:  # Player 2 right
+            player2_sprite.move(1)
 
         # Update background position
         background_rect.y += background_speed
@@ -166,8 +195,12 @@ def game_loop():
         if background_copy_rect.top >= screen.get_height():
             background_copy_rect.y = -background_copy_rect.height
 
+        # Check if the game is still running before updating the enemies group
+        if game_running:
+            enemies_group.update()
+
         # Collision detection between player and enemies
-        if pygame.sprite.spritecollideany(player_sprite, enemies_group):
+        if pygame.sprite.spritecollideany(player_sprite, enemies_group) or pygame.sprite.spritecollideany(player2_sprite, enemies_group):
             end_game(score)
 
         # Collision detection between projectiles and enemies
@@ -181,9 +214,6 @@ def game_loop():
                     enemy.speed = enemy_speed
             if score % 10 == 0:  # Check if score is divisible by 13
                 add_new_wave()
-
-        # Move enemies
-        enemies_group.update()
 
         # Rendering
         screen.fill(BLACK)
@@ -210,7 +240,6 @@ def end_game(final_score):
     while waiting_for_key:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN or event.type == pygame.QUIT:
-                pygame.quit()  # Quit the game
                 waiting_for_key = False
 
 def add_new_wave():

@@ -207,7 +207,7 @@ def game_loop():
         hits = pygame.sprite.groupcollide(projectiles, enemies_group, True, True)
         for hit in hits:
             score += 1
-            if score % 3 == 0:  # Check if score is divisible by 10
+            if score % 10 == 0:  # Check if score is divisible by 10
                 enemy_speed += 1  # Increase enemy speed
                 # Update speed for all enemies on the field
                 for enemy in enemies_group:
@@ -229,7 +229,7 @@ def end_game(final_score):
 
     game_running = False
     screen.fill(BLACK)
-    end_font = pygame.font.Font(None, 36)
+    end_font = pygame.font.Font(None, 64)
     end_text = end_font.render(f"Game Over! Final Score: {final_score}", True, WHITE)
     end_rect = end_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2 - 20))
     screen.blit(end_text, end_rect)

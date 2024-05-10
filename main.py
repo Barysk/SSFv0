@@ -168,7 +168,7 @@ def game_loop():
 
         # Collision detection between player and enemies
         if pygame.sprite.spritecollideany(player_sprite, enemies_group):
-            end_game()
+            end_game(score)
 
         # Collision detection between projectiles and enemies
         hits = pygame.sprite.groupcollide(projectiles, enemies_group, True, True)
@@ -194,20 +194,23 @@ def game_loop():
         pygame.display.flip()
         clock.tick(60)
 
-def end_game():
-    global game_running
+def end_game(final_score):
+    global game_running, score, enemies_group, enemy_speed, all_sprites
+
     game_running = False
     screen.fill(BLACK)
     end_font = pygame.font.Font(None, 36)
-    end_text = end_font.render("Game Over! Press any key to exit.", True, WHITE)
-    end_rect = end_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2))
+    end_text = end_font.render(f"Game Over! Final Score: {final_score}", True, WHITE)
+    end_rect = end_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2 - 20))
     screen.blit(end_text, end_rect)
     pygame.display.flip()
-    # Wait for any key press to exit the game
+
+    # Wait for any key press to quit the game
     waiting_for_key = True
     while waiting_for_key:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN or event.type == pygame.QUIT:
+                pygame.quit()  # Quit the game
                 waiting_for_key = False
 
 def add_new_wave():

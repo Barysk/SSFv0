@@ -119,7 +119,7 @@ projectiles = pygame.sprite.Group()
 player_sprite = Player(player_image, [640, 650])
 all_sprites.add(player_sprite)
 
-enemies = [Enemy(enemy_image, pos) for pos in [[300, 50], [600, 50], [900, 50]]]
+enemies = [Enemy(enemy_image, pos) for pos in [[100, 50], [200, 50], [300, 50], [400, 50], [500, 50], [600, 50], [700, 50], [800, 50], [900, 50], [1000, 50], [1100, 50], [1200, 50], [1300, 50], [1400, 50], [1500, 50], [1600, 50], [1700, 50], [1800, 50]]]
 for enemy in enemies:
     enemies_group.add(enemy)
     all_sprites.add(enemy)
@@ -139,7 +139,8 @@ def draw_score():
     screen.blit(score_surface, score_rect)
 
 def game_loop():
-    global game_running, screen, score
+    global game_running, screen, score, enemy_speed
+
     while game_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -165,10 +166,24 @@ def game_loop():
         if background_copy_rect.top >= screen.get_height():
             background_copy_rect.y = -background_copy_rect.height
 
-        # Collision detection
+        # Collision detection between player and enemies
+        if pygame.sprite.spritecollideany(player_sprite, enemies_group):
+            end_game()
+
+        # Collision detection between projectiles and enemies
         hits = pygame.sprite.groupcollide(projectiles, enemies_group, True, True)
         for hit in hits:
             score += 1
+            if score % 3 == 0:  # Check if score is divisible by 10
+                enemy_speed += 1  # Increase enemy speed
+                # Update speed for all enemies on the field
+                for enemy in enemies_group:
+                    enemy.speed = enemy_speed
+            if score % 10 == 0:  # Check if score is divisible by 13
+                add_new_wave()
+
+        # Move enemies
+        enemies_group.update()
 
         # Rendering
         screen.fill(BLACK)
@@ -178,6 +193,30 @@ def game_loop():
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(60)
+
+def end_game():
+    global game_running
+    game_running = False
+    screen.fill(BLACK)
+    end_font = pygame.font.Font(None, 36)
+    end_text = end_font.render("Game Over! Press any key to exit.", True, WHITE)
+    end_rect = end_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2))
+    screen.blit(end_text, end_rect)
+    pygame.display.flip()
+    # Wait for any key press to exit the game
+    waiting_for_key = True
+    while waiting_for_key:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN or event.type == pygame.QUIT:
+                waiting_for_key = False
+
+def add_new_wave():
+    global enemies_group
+    new_enemies = [Enemy(enemy_image, pos) for pos in [[100, 50], [200, 50], [300, 50], [400, 50], [500, 50], [600, 50], [700, 50], [800, 50], [900, 50], [1000, 50], [1100, 50], [1200, 50], [1300, 50], [1400, 50], [1500, 50], [1600, 50], [1700, 50], [1800, 50]]]
+    for enemy in new_enemies:
+        enemy.speed = enemy_speed  # Set speed for new enemies
+        enemies_group.add(enemy)
+        all_sprites.add(enemy)
 
 # Start enemy movement in a separate thread
 enemy_thread = threading.Thread(target=move_enemies)

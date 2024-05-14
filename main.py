@@ -1,3 +1,4 @@
+import sys
 import pygame
 import threading
 
@@ -11,12 +12,18 @@ pygame.display.set_caption('SSF_v0')
 # Define colors and settings
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GRAY = (200, 200, 200)
+font = pygame.font.Font(None, 36)
 player_speed = 10
 projectile_speed = 10
 enemy_speed = 5
 background_speed = 1
 game_running = True
 score = 0
+
+# Player 2 activation flag
+player2_active = False
+player2_sprite = None
 
 # Load the images
 player_image_original = pygame.image.load('Sprites/player.png').convert_alpha()
@@ -45,12 +52,106 @@ clock = pygame.time.Clock()
 
 # Load font
 font_path = 'Fonts/3270-Regular.ttf'
-# font_path = 'PixelifySans-Bold.ttf' # Initial font
 font_size = 32
 score_font = pygame.font.Font(font_path, font_size)
 
 # Lock for synchronization (used sparingly)
 lock = threading.Lock()
+
+# Functions for main menu and buttons
+def draw_text(text, font, color, surface, x, y):
+    textobj = font.render(text, True, color)
+    textrect = textobj.get_rect()
+    textrect.topleft = (x, y)
+    surface.blit(textobj, textrect)
+
+def main_menu():
+    while True:
+        screen.fill(BLACK)
+        draw_text('Main Menu', font, WHITE, screen, 20, 20)
+
+        mx, my = pygame.mouse.get_pos()
+
+        button_1 = pygame.Rect(50, 100, 200, 50)
+        button_2 = pygame.Rect(50, 160, 200, 50)
+        button_3 = pygame.Rect(50, 220, 200, 50)
+
+        pygame.draw.rect(screen, GRAY, button_1)
+        draw_text('Start', font, WHITE, screen, 70, 110)
+        pygame.draw.rect(screen, GRAY, button_2)
+        draw_text('Options', font, WHITE, screen, 70, 170)
+        pygame.draw.rect(screen, GRAY, button_3)
+        draw_text('Exit', font, WHITE, screen, 70, 230)
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        if button_1.collidepoint((mx, my)) and click:
+            game_loop()  # Start the game
+        if button_2.collidepoint((mx, my)) and click:
+            options()  # Enter options menu
+        if button_3.collidepoint((mx, my)) and click:
+            pygame.quit()
+            sys.exit()
+
+        pygame.display.update()
+
+
+def options():
+    global screen
+    running = True
+    left_margin = 50  # Margin from the left side for buttons
+    button_width = 200
+    button_height = 50
+    vertical_spacing = 20  # Space between buttons
+
+    # Define button positions
+    button_hd = pygame.Rect(left_margin, 250, button_width, button_height)
+    button_fullhd = pygame.Rect(left_margin, 250 + button_height + vertical_spacing, button_width, button_height)
+
+    while running:
+        screen.fill(BLACK)
+
+        # Draw titles and ESC instruction
+        draw_text('Options', font, WHITE, screen, left_margin, 50)  # Move to top left corner
+        draw_text('Press ESC to return', font, WHITE, screen, left_margin, 550)  # Move to bottom left corner
+
+        mx, my = pygame.mouse.get_pos()
+
+        # Draw buttons and centered text on them
+        pygame.draw.rect(screen, BLACK, button_hd)
+        pygame.draw.rect(screen, BLACK, button_fullhd)
+        draw_text_centered('Window', font, WHITE, screen, button_hd)
+        draw_text_centered('Full Screen', font, WHITE, screen, button_fullhd)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if button_hd.collidepoint((mx, my)):
+                    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+                elif button_fullhd.collidepoint((mx, my)):
+                    screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+
+        pygame.display.update()
+
+
+def draw_text_centered(text, font, color, surface, rect):
+    textobj = font.render(text, True, color)
+    textrect = textobj.get_rect(center=rect.center)
+    surface.blit(textobj, textrect)
+
 
 # Player class
 class Player(pygame.sprite.Sprite):
@@ -136,10 +237,6 @@ projectiles = pygame.sprite.Group()
 player_sprite = Player(player_image, [300, 650])
 all_sprites.add(player_sprite)
 
-# Add player 2 to sprite groups
-player2_sprite = Player2(player_image, [900, 650])
-all_sprites.add(player2_sprite)
-
 enemies = [Enemy(enemy_image, pos) for pos in [[100, 50], [200, 50], [300, 50], [400, 50], [500, 50], [600, 50], [700, 50], [800, 50], [900, 50], [1000, 50], [1100, 50], [1200, 50], [1300, 50], [1400, 50], [1500, 50], [1600, 50], [1700, 50], [1800, 50]]]
 for enemy in enemies:
     enemies_group.add(enemy)
@@ -160,7 +257,7 @@ def draw_score():
     screen.blit(score_surface, score_rect)
 
 def game_loop():
-    global game_running, screen, score, enemy_speed
+    global game_running, screen, score, enemy_speed, player2_active
 
     while game_running:
         for event in pygame.event.get():
@@ -171,8 +268,12 @@ def game_loop():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     shoot_projectile(player_sprite)
-                elif event.key == pygame.K_w:  # Player 2 up
+                if player2_active and event.key == pygame.K_w:
                     shoot_projectile(player2_sprite)
+                if event.key == pygame.K_F1 and not player2_active:
+                    player2_active = True
+                    player2_sprite = Player2(player_image, [900, 650])
+                    all_sprites.add(player2_sprite)
 
         # Handle key inputs for player 1
         keys = pygame.key.get_pressed()
@@ -181,11 +282,12 @@ def game_loop():
         if keys[pygame.K_RIGHT]:
             player_sprite.move(1)
 
-        # Handle key inputs for player 2
-        if keys[pygame.K_a]:  # Player 2 left
-            player2_sprite.move(-1)
-        if keys[pygame.K_d]:  # Player 2 right
-            player2_sprite.move(1)
+        # Handle key inputs for player 2 if active
+        if player2_active:
+            if keys[pygame.K_a]:  # Player 2 moves left
+                player2_sprite.move(-1)
+            if keys[pygame.K_d]:  # Player 2 moves right
+                player2_sprite.move(1)
 
         # Update background position
         background_rect.y += background_speed
@@ -200,7 +302,7 @@ def game_loop():
             enemies_group.update()
 
         # Collision detection between player and enemies
-        if pygame.sprite.spritecollideany(player_sprite, enemies_group) or pygame.sprite.spritecollideany(player2_sprite, enemies_group):
+        if pygame.sprite.spritecollideany(player_sprite, enemies_group) or (player2_active and pygame.sprite.spritecollideany(player2_sprite, enemies_group)):
             end_game(score)
 
         # Collision detection between projectiles and enemies
@@ -258,8 +360,8 @@ enemy_thread.start()
 projectile_thread = threading.Thread(target=move_projectiles)
 projectile_thread.start()
 
-# Start the main game loop in the main thread
-game_loop()
+if __name__ == "__main__":
+    main_menu()
 
 # Wait for threads to finish before quitting
 enemy_thread.join()

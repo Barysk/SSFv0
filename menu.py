@@ -48,7 +48,7 @@ def main_menu(screen, font):
         if button_1.collidepoint((mx, my)) and click:
             game_loop()  # Start the game
         if button_2.collidepoint((mx, my)) and click:
-            options()  # Enter options menu
+            options(screen, font)  # Enter options menu
         if button_3.collidepoint((mx, my)) and click:
             pygame.quit()
             sys.exit()

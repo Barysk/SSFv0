@@ -218,7 +218,7 @@ def game_loop():
                 # Update speed for all enemies on the field
                 for enemy in enemies_group:
                     enemy.speed = enemy_speed
-            if score % 10 == 0:  # Check if score is divisible by 13
+            if score % 11 == 0:  # Check if score is divisible by givennumber
                 add_new_wave()
 
         # Rendering

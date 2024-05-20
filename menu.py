@@ -1,34 +1,36 @@
 import pygame
 import sys
-from Game import game_loop
+from Game import game_loop, restart_game
+from config import BLACK, WHITE, GRAY, font
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GRAY = (200, 200, 200)
-font = pygame.font.Font(None, 36)
-
+# Utility function to draw text with the top left corner at a specific location
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, True, color)
     textrect = textobj.get_rect()
     textrect.topleft = (x, y)
     surface.blit(textobj, textrect)
 
+# Utility function to draw text centered within a specified rectangle
 def draw_text_centered(text, font, color, surface, rect):
     textobj = font.render(text, True, color)
     textrect = textobj.get_rect(center=rect.center)
     surface.blit(textobj, textrect)
 
+# Displays the main menu interface, handling interactions and navigation
 def main_menu(screen, font):
     while True:
         screen.fill(BLACK)
-        draw_text('Main Menu', font, WHITE, screen, 20, 20)
+        draw_text('Main Menu', font, WHITE, screen, 20, 20)  # Draw the main menu title at the top-left corner
 
+        # Get the current mouse position
         mx, my = pygame.mouse.get_pos()
 
+        # Define buttons as rectangles for interaction
         button_1 = pygame.Rect(50, 100, 200, 50)
         button_2 = pygame.Rect(50, 160, 200, 50)
         button_3 = pygame.Rect(50, 220, 200, 50)
 
+        # Draw buttons and label them
         pygame.draw.rect(screen, GRAY, button_1)
         draw_text('Start', font, WHITE, screen, 70, 110)
         pygame.draw.rect(screen, GRAY, button_2)
@@ -36,6 +38,7 @@ def main_menu(screen, font):
         pygame.draw.rect(screen, GRAY, button_3)
         draw_text('Exit', font, WHITE, screen, 70, 230)
 
+        # Variable to check if the mouse was clicked
         click = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -45,7 +48,9 @@ def main_menu(screen, font):
                 if event.button == 1:
                     click = True
 
+        # Check if a button was clicked and respond accordingly
         if button_1.collidepoint((mx, my)) and click:
+            restart_game()  # Restart the game processes
             game_loop()  # Start the game
         if button_2.collidepoint((mx, my)) and click:
             options(screen, font)  # Enter options menu
@@ -53,8 +58,10 @@ def main_menu(screen, font):
             pygame.quit()
             sys.exit()
 
+        # Update the display to show changes
         pygame.display.update()
 
+# Submenu for adjusting screen options like window size
 def options(screen, font):
     running = True
     left_margin = 50  # Margin from the left side for buttons

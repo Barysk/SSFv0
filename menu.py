@@ -99,8 +99,15 @@ def options(screen, font):
                 # Start dragging if mouse is over the slider
                 if volume_slider_rect.collidepoint(mx, my):
                     dragging = True
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                button_down = True  # Set flag to true if mouse button is pressed
+                # Check if the mouse is over the button and change the screen resolution
+                if button_hd.collidepoint((mx, my)):
+                    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+                elif button_fullhd.collidepoint((mx, my)):
+                    screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                dragging = False  # Stop dragging on mouse button release
+                button_down = False  # Reset flag when the mouse button is released
 
             # Handle the Escape key to exit the options menu
             if event.type == pygame.KEYDOWN:

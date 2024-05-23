@@ -177,8 +177,8 @@ def game_loop():
         for hit in hits:
             death_sound.play()
             score += 1
+            '''
             if score % 10 == 0:  # Check if score is divisible by 10
-                '''
                 enemy_speed += 1  # Increase enemy speed
                 # Update speed for all enemies on the field
                 for enemy in enemies_group:

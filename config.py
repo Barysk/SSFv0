@@ -2,6 +2,14 @@ import pygame
 
 # Initializes all imported Pygame modules
 pygame.init()
+pygame.mixer.init()
+
+#Importing sounds
+shoot_sound = pygame.mixer.Sound('Sounds/shoot_sound.wav')
+death_sound = pygame.mixer.Sound('Sounds/death_sound.wav')
+game_over = pygame.mixer.Sound('Sounds/game_over2.wav')
+player2_sound = pygame.mixer.Sound('Sounds/player2.wav')
+current_volume = 0.5
 
 # Display settings
 SCREEN_WIDTH = 1280
@@ -23,7 +31,16 @@ score_font = pygame.font.Font(font_path, font_size)
 player_speed = 10
 projectile_speed = 10
 background_speed = 1
-enemy_speed = 5
+enemy_speed = 10000
+
+# Shooting restrictions
+max_projectiles = 10
+reload_time = 10  # reload time in seconds
+
+# Counters and timers for reloading
+player_shots_left = max_projectiles
+player2_shots_left = max_projectiles
+last_reload_time = pygame.time.get_ticks()
 
 # Loading image assets with optional resizing
 def load_image(path, size=None):

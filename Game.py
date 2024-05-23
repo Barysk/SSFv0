@@ -34,10 +34,33 @@ for enemy in enemies:
     enemies_group.add(enemy)
     all_sprites.add(enemy)
 
-def shoot_projectile(player):
-    projectile = Projectile(projectile_image, player.rect.midtop)
-    all_sprites.add(projectile)
-    projectiles.add(projectile)
+def shoot_projectile(player, is_player2=False):
+    global player_shots_left, player2_shots_left
+
+    if is_player2:
+        if player2_shots_left > 0:
+            projectile = Projectile(projectile_image, player.rect.midtop)
+            all_sprites.add(projectile)
+            projectiles.add(projectile)
+            shoot_sound.play()
+            player2_shots_left -= 1
+    else:
+        if player_shots_left > 0:
+            projectile = Projectile(projectile_image, player.rect.midtop)
+            all_sprites.add(projectile)
+            projectiles.add(projectile)
+            shoot_sound.play()
+            player_shots_left -= 1
+
+def reload_projectiles():
+    global last_reload_time, player_shots_left, player2_shots_left
+
+    current_time = pygame.time.get_ticks()
+    if current_time - last_reload_time > reload_time * 1000:  # reload in seconds
+        player_shots_left = max_projectiles
+        player2_shots_left = max_projectiles
+        last_reload_time = current_time
+
 
 def move_projectiles():
     """Thread function to manage projectile movements independently."""
@@ -72,10 +95,34 @@ def draw_score():
     score_rect = score_surface.get_rect(topleft=(10, 10))
     screen.blit(score_surface, score_rect)
 
+def draw_projectiles():
+    """Function to draw available projectiles on the screen."""
+    proj_surface = score_font.render(f'Shots left: {player_shots_left}', True, WHITE)
+    score_rect = proj_surface.get_rect(topleft=(10, 40))
+    screen.blit(proj_surface, score_rect)
+def draw_slider(screen, x, y, width, height, percentage):
+    """Draws a volume slider."""
+    pygame.draw.rect(screen, GRAY, (x, y, width, height))  # Slider background
+    slider_pos = x + int(percentage * width)  # Calculate slider knob position
+    pygame.draw.circle(screen, WHITE, (slider_pos, y + height // 2), height // 2)  # Slider knob
+    return pygame.Rect(x, y, width, height), slider_pos
+
+def handle_slider_events(slider_rect, mx, my, button_down):
+    """Handles mouse events on the volume slider."""
+    static_slider_x = slider_rect.x + int(current_volume * slider_rect.width)  # Current slider position
+    if button_down and slider_rect.collidepoint(mx, my):
+        # Calculate new volume based on mouse position within the slider bounds
+        new_x = max(slider_rect.x, min(mx, slider_rect.right))
+        new_volume = (new_x - slider_rect.x) / slider_rect.width
+        return new_volume
+    return None
+
+
 def game_loop():
     global game_running, screen, score, player2_active, enemy_speed
 
     while game_running:
+        reload_projectiles()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -90,6 +137,7 @@ def game_loop():
                 if event.key == pygame.K_F1 and not player2_active:
                     player2_active = True
                     player2_sprite = Player2(player_image, [900, 650])
+                    player2_sound.play()
                     all_sprites.add(player2_sprite)
                 if event.key == pygame.K_ESCAPE:
                     game_running = False  # Stop the game loop on ESC key press
@@ -127,13 +175,16 @@ def game_loop():
         # Collision detection between projectiles and enemies
         hits = pygame.sprite.groupcollide(projectiles, enemies_group, True, True)
         for hit in hits:
+            death_sound.play()
             score += 1
             if score % 10 == 0:  # Check if score is divisible by 10
+                '''
                 enemy_speed += 1  # Increase enemy speed
                 # Update speed for all enemies on the field
                 for enemy in enemies_group:
                     enemy.speed = enemy_speed
-            if score % 11 == 0:  # Check if score is divisible by givennumber
+                '''
+            if score % 11 == 0:  # Check if score is divisible by given number
                 add_new_wave()
 
         # Rendering
@@ -141,6 +192,7 @@ def game_loop():
         screen.blit(background, background_rect)
         screen.blit(background_copy, background_copy_rect)
         draw_score()
+        draw_projectiles()
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(60)
@@ -151,6 +203,7 @@ def end_game(final_score):
     game_running = False
     screen.fill(BLACK)
     end_font = pygame.font.Font(None, 64)
+    game_over.play()
     end_text = end_font.render(f"Game Over! Final Score: {final_score}", True, WHITE)
     end_rect = end_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2 - 20))
     screen.blit(end_text, end_rect)
@@ -177,6 +230,8 @@ def restart_game():
     score = 0
     player2_active = False
     enemy_speed = 5  # Reset enemy speed to its initial value
+    #for game over sound demonstration
+    #enemy_speed = 100
 
     # Clear sprite groups
     enemies_group = pygame.sprite.Group()

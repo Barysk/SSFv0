@@ -1,7 +1,7 @@
 import pygame
 import sys
-from Game import game_loop, restart_game
-from config import BLACK, WHITE, GRAY, font
+from Game import game_loop, restart_game, draw_slider, handle_slider_events
+from config import BLACK, WHITE, GRAY, font, game_over, shoot_sound, death_sound, current_volume
 
 # Utility function to draw text with the top left corner at a specific location
 def draw_text(text, font, color, surface, x, y):
@@ -63,43 +63,65 @@ def main_menu(screen, font):
 
 # Submenu for adjusting screen options like window size
 def options(screen, font):
-    running = True
+    running = True  # Control the loop execution
+    dragging = False  # Indicates if the slider is being dragged
     left_margin = 50  # Margin from the left side for buttons
     button_width = 200
     button_height = 50
-    vertical_spacing = 20  # Space between buttons
+    vertical_spacing = 20  # Vertical spacing between buttons
 
-    # Define button positions
+    # Define the positions for screen resolution buttons
     button_hd = pygame.Rect(left_margin, 250, button_width, button_height)
     button_fullhd = pygame.Rect(left_margin, 250 + button_height + vertical_spacing, button_width, button_height)
+    volume_slider_rect = pygame.Rect(50, 400, 200, 10)  # Volume slider rectangle
 
     while running:
-        screen.fill(BLACK)
+        screen.fill(BLACK)  # Clear the screen with black color
 
-        # Draw titles and ESC instruction
-        draw_text('Options', font, WHITE, screen, left_margin, 50)  # Move to top left corner
-        draw_text('Press ESC to return', font, WHITE, screen, left_margin, 550)  # Move to bottom left corner
+        # Draw the 'Options' title and 'Press ESC to return' instruction
+        draw_text('Options', font, WHITE, screen, left_margin, 50)
+        draw_text('Press ESC to return', font, WHITE, screen, left_margin, 550)
 
-        mx, my = pygame.mouse.get_pos()
-
-        # Draw buttons and centered text on them
-        pygame.draw.rect(screen, BLACK, button_hd)
-        pygame.draw.rect(screen, BLACK, button_fullhd)
+        # Draw resolution change buttons
+        pygame.draw.rect(screen, GRAY, button_hd)
         draw_text_centered('Window', font, WHITE, screen, button_hd)
+        pygame.draw.rect(screen, GRAY, button_fullhd)
         draw_text_centered('Full Screen', font, WHITE, screen, button_fullhd)
 
+        mx, my = pygame.mouse.get_pos()  # Get the current mouse position
+
+        # Event handling loop
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-                pygame.quit()
-                sys.exit()
+                pygame.quit()  # Quit the Pygame
+                sys.exit()  # Exit the program
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                if button_hd.collidepoint((mx, my)):
-                    screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-                elif button_fullhd.collidepoint((mx, my)):
-                    screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
+                # Start dragging if mouse is over the slider
+                if volume_slider_rect.collidepoint(mx, my):
+                    dragging = True
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                dragging = False  # Stop dragging on mouse button release
+
+            # Handle the Escape key to exit the options menu
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    return
+                    return  # Exit the options function and return to the previous menu
 
+        if dragging:
+            # Handle slider movement and adjust volume if dragging
+            new_volume = handle_slider_events(volume_slider_rect, mx, my, True)
+            if new_volume is not None:
+                adjust_volume(new_volume)  # Adjust the global volume based on the slider's position
+
+        # Redraw the volume slider with the updated volume level
+        draw_slider(screen, volume_slider_rect.x, volume_slider_rect.y, volume_slider_rect.width, volume_slider_rect.height, current_volume)
+
+        # Update the display to show changes
         pygame.display.update()
+
+def adjust_volume(volume):
+    global current_volume
+    current_volume = volume
+    pygame.mixer.music.set_volume(current_volume)
+    for sound in [shoot_sound, death_sound, game_over]:
+        sound.set_volume(current_volume)

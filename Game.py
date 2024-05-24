@@ -117,6 +117,17 @@ def handle_slider_events(slider_rect, mx, my, button_down):
         return new_volume
     return None
 
+lock = threading.Lock()
+
+def resize_background(width, height):
+    """ Scales both background images according to the current window size. """
+    global background, background_rect, background_copy, background_copy_rect
+    with lock:
+        background = pygame.transform.scale(background_image, (width, height))
+        background_copy = pygame.transform.scale(background_image, (width, height))
+        background_rect = background.get_rect()
+        background_copy_rect = background.get_rect()
+        background_copy_rect.y = -background_copy_rect.height
 
 def game_loop():
     global game_running, screen, score, player2_active, enemy_speed
@@ -129,6 +140,8 @@ def game_loop():
                 game_running = False  # Set game_running too False to exit the loop
             elif event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+                resize_background(event.w, event.h)
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     shoot_projectile(player_sprite)

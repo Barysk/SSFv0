@@ -149,7 +149,7 @@ def game_loop():
                     shoot_projectile(player2_sprite)
                 if event.key == pygame.K_F1 and not player2_active:
                     player2_active = True
-                    player2_sprite = Player2(player_image, [900, 650])
+                    player2_sprite = Player2(player2_image, [900, 650])
                     player2_sound.play()
                     all_sprites.add(player2_sprite)
                 if event.key == pygame.K_ESCAPE:

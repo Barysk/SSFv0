@@ -50,7 +50,8 @@ def load_image(path, size=None):
     return image
 
 #Resource initialization
-player_image = load_image('Sprites/player.png', (32, 32))
+player_image    = load_image('Sprites/player.png', (32, 32))
+player2_image   = load_image('Sprites/player2.png', (32, 32))
 projectile_image = load_image('Sprites/projectile.png', (8, 32))
 enemy_image = load_image('Sprites/enemy.png', (32, 32))
 background_image = load_image('Sprites/star_background.png').convert()

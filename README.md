@@ -4,6 +4,10 @@
 
 SSFv0 is a 2D arcade-style game wrought using Pygame. Players take the helm of a celestial vessel to vanquish waves of adversaries whilst evading laser beams. The game employs multiple threads to govern the movement of projectiles and foes, ensuring a seamless play experience.
 
+![gameplay](images/gameplay.png)
+
+![menu](images/menu.png)
+
 ## Threads
 
 1.  **Main Thread**
